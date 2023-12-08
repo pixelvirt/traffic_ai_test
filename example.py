@@ -1,7 +1,7 @@
 import os
-import math 
+import math
 from collections import Counter
-import threading
+import numpy as np
 
 import cv2
 from ultralytics import YOLO
@@ -9,152 +9,89 @@ from ultralytics import YOLO
 from coco_names import coco_class_list, vehicle_class_list
 
 
-VIDEO_PATH_1 = "./videos/traffic_vid_1.mp4"
-VIDEO_PATH_2 = "./videos/traffic_vid_1.mp4"
-VIDEO_PATH_2 = "./videos/traffic_vid_1.mp4"
-VIDEO_PATH_4 = "./videos/traffic_vid_1.mp4"
-
-
+VIDEO_PATH = "./videos/traffic_vid_2.mp4"
 YOLO_MODEL_NANO = YOLO("yolo_models/yolov8n.pt")
+YOLO_MODEL_SMALL = YOLO("yolo_models/yolov8s.pt")
 YOLO_MODEL_LARGE = YOLO("yolo_models/yolov8l.pt")
-
 OUTPUT_FOLDER = 'output'
-CAPTURE_INTERVAL = 3
-CONFIDENCE_THRESHOLD = 0.4
+CAPTURE_INTERVAL = 2
+CONFIDENCE_THRESHOLD = 0.7
 
 
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
 
-video_1 = cv2.VideoCapture(VIDEO_PATH_1)
-if not video_1.isOpened():
-    print("Cannot open video")
-    exit()
-
-video_2 = cv2.VideoCapture(VIDEO_PATH_2)
-if not video_2.isOpened():
+video = cv2.VideoCapture(VIDEO_PATH)
+if not video.isOpened():
     print("Cannot open video")
     exit()
 
 
-video_3 = cv2.VideoCapture(VIDEO_PATH_2)
-if not video_2.isOpened():
-    print("Cannot open video")
-    exit()
+# line coordinates
+lx1, ly1 = 5, 640
+lx2, ly2 = 260, 5
 
 
-video_4 = cv2.VideoCapture(VIDEO_PATH_2)
-if not video_2.isOpened():
-    print("Cannot open video")
-    exit()
-
-
-def draw_rectangles(img):
-    frame = YOLO_MODEL_NANO(img, stream=True, conf=CONFIDENCE_THRESHOLD)
-    for r in frame:
-        boxes = r.boxes
-        for box in boxes:
-            x1, y1, x2, y2 = box.xyxy[0]
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 1)
-            # conf = math.ceil(box.conf * 100)/100
-            cls = int(box.cls[0])
-            cv2.putText(img, f"{coco_class_list[cls]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-
-
-def detect_objects(image, video_name):
-    res =  cv2.cvtColor(cv2.equalizeHist(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)), cv2.COLOR_GRAY2BGR)
-
-    frame = YOLO_MODEL_LARGE(res, stream=True, conf=CONFIDENCE_THRESHOLD)
-    detected_classes = []
-    for r in frame:
-        boxes = r.boxes
-        for box in boxes:
-            x1, y1, x2, y2 = box.xyxy[0]
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-            cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 1)
-            conf = math.ceil(box.conf * 100)/100
-            cls = int(box.cls[0])
-            detected_classes.append(cls)
-            cv2.putText(image, f"{conf} {coco_class_list[cls]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-
-    detected_classes_names = [coco_class_list[item] for item in detected_classes]
-    counter = Counter(detected_classes_names)
-    # print(counter)
-
-    detected_vehicles = ["vehicle" if item in vehicle_class_list else item for item in detected_classes_names]
-    vehicle_counter = Counter(detected_vehicles)
-    vehicle_count = vehicle_counter["vehicle"]
-
-    counter["vehicle"] = vehicle_count
-
-    with open(f"data.txt", 'a') as f:
-        f.write(f"{video_name}: {dict(counter)}\n")
-
-    text_x, text_y = 25, 25
-    for class_name, count in counter.items():
-        cv2.putText(image, f"{class_name}: {count}", (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 1)
-        text_y += 25
-
-    cv2.imwrite(f"{OUTPUT_FOLDER}/{frame_count}-{video_name}.jpg", image)
-    # print(f"Captured {frame_count}.jpg")
-
-    detected_classes = []
+# distance from line
+def distance_from_line(x, y):
+    numerator = (lx2 - lx1) * (ly1 - y) - (lx1 - x) * (ly2 - ly1)
+    denominator = np.sqrt((lx2 - lx1)**2 + (ly2 - ly1)**2)
+    if denominator == 0:
+        return 0
+    return numerator / denominator
 
 
 try:
     frame_count = 0
-    fps = int(round(video_1.get(cv2.CAP_PROP_FPS)))
+    fps = int(round(video.get(cv2.CAP_PROP_FPS)))
 
-    while video_1.isOpened() and video_2.isOpened() and video_3.isOpened() and video_4.isOpened():
+    while True:
         # read frame from webcam
-        success_1, img_1 = video_1.read()
-        success_2, img_2 = video_2.read()
-        success_3, img_3 = video_3.read()
-        success_4, img_4 = video_4.read()
-
-        img_1 = cv2.resize(img_1, (640, 480))
-        img_2 = cv2.resize(img_2, (640, 480))
-        img_3 = cv2.resize(img_3, (640, 480))
-        img_4 = cv2.resize(img_4, (640, 480))
-
-        if not success_1 or not success_2 or not success_3 or not success_4:
+        success, img = video.read()
+        if not success:
             print("Can't receive frame (stream end?). Exiting ...")
             break
 
+        # run YOLO model on each frame
+        res =  cv2.cvtColor(cv2.equalizeHist(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)), cv2.COLOR_GRAY2BGR)
+        frames = YOLO_MODEL_NANO(res, stream=True, conf=CONFIDENCE_THRESHOLD)
+
         frame_count += 1
+        cv2.line(img, (lx1, ly1), (lx2, ly2), (0, 255, 0), 2)
 
-        if frame_count % 5 == 0:
-            thread_1 = threading.Thread(target=draw_rectangles, args=(img_1,))
-            thread_2 = threading.Thread(target=draw_rectangles, args=(img_2,))
-            thread_3 = threading.Thread(target=draw_rectangles, args=(img_3,))
-            thread_4 = threading.Thread(target=draw_rectangles, args=(img_4,))
+        for r in frames:
+            detected_classes = []
+            boxes = r.boxes
+            for box in boxes:
+                x1, y1, x2, y2 = box.xyxy[0]
+                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                center_x = (x1 + x2) / 2
+                center_y = (y1 + y2) / 2
 
-            thread_1.start(), thread_2.start(), thread_3.start(), thread_4.start()
+                # Calculate distance from the line
+                distance = distance_from_line(center_x, center_y)
 
-            thread_1.join(), thread_2.join(), thread_3.join(), thread_4.join()
+                # Determine whether the object is on the left or right
+                if distance > 0:
+                    position = "R"
+                elif distance < 0:
+                    position = "L"
+                else:
+                    position = "O"
 
-            frame_1 = cv2.hconcat([img_1, img_2])
-            frame_2 = cv2.hconcat([img_3, img_4])
-            frame = cv2.vconcat([frame_1, frame_2])
+                # Draw bounding box and label
+                if position == "L":
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 1)
+                    conf = math.ceil(box.conf * 100)/100
+                    cls = int(box.cls[0])
+                    detected_classes.append(cls)
+                    cv2.putText(img, f"{conf} {coco_class_list[cls]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-            cv2.imshow('frame', frame)
-
-        if frame_count % (CAPTURE_INTERVAL * fps) == 0:
-            thread_1 = threading.Thread(target=detect_objects, args=(img_1.copy(), "1"))
-            thread_2 = threading.Thread(target=detect_objects, args=(img_2.copy(), "2"))
-            thread_3 = threading.Thread(target=detect_objects, args=(img_3.copy(), "3"))
-            thread_4 = threading.Thread(target=detect_objects, args=(img_4.copy(), "4"))
-
-            thread_1.start(), thread_2.start(), thread_3.start(), thread_4.start()
-
-            thread_1.join(), thread_2.join(), thread_3.join(), thread_4.join()
-
-        if cv2.waitKey(1) == ord('q'):
+        cv2.imshow("Video", img)
+        if cv2.waitKey(25) & 0xFF == ord("q"):
             break
 
 finally:
-    video_1.release()
-    video_2.release()
+    video.release()
     cv2.destroyAllWindows()

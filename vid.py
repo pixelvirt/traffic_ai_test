@@ -79,7 +79,7 @@ try:
                     text_y += 25
 
                 cv2.imwrite(f"{OUTPUT_FOLDER}/{frame_count}.jpg", img)
-                print(f"Captured {frame_count}.jpg")
+                # print(f"Captured {frame_count}.jpg")
                 
             detected_classes = []
 

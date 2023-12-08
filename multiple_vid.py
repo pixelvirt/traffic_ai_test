@@ -15,11 +15,11 @@ VIDEO_PATH_2 = "./videos/traffic_vid_1.mp4"
 VIDEO_PATH_4 = "./videos/traffic_vid_1.mp4"
 
 
-YOLO_MODEL_NANO = YOLO("yolo_models/yolov5n.pt")
-YOLO_MODEL_SMALL = YOLO("yolo_models/yolov8s.pt")
+YOLO_MODEL_NANO = YOLO("yolo_models/yolov8n.pt")
 YOLO_MODEL_LARGE = YOLO("yolo_models/yolov8l.pt")
+
 OUTPUT_FOLDER = 'output'
-CAPTURE_INTERVAL = 4
+CAPTURE_INTERVAL = 3
 CONFIDENCE_THRESHOLD = 0.4
 
 
@@ -125,7 +125,7 @@ try:
 
         frame_count += 1
 
-        if frame_count % 5 == 0:
+        if frame_count % 3 == 0:
             thread_1 = threading.Thread(target=draw_rectangles, args=(img_1,))
             thread_2 = threading.Thread(target=draw_rectangles, args=(img_2,))
             thread_3 = threading.Thread(target=draw_rectangles, args=(img_3,))

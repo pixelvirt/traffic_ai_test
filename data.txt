@@ -1,0 +1,24 @@
+2: {'bus': 3, 'car': 2, 'person': 1, 'motorcycle': 3, 'vehicle': 8}
+1: {'bus': 3, 'car': 2, 'person': 1, 'motorcycle': 3, 'vehicle': 8}
+3: {'bus': 3, 'car': 2, 'person': 1, 'motorcycle': 3, 'vehicle': 8}
+4: {'bus': 3, 'car': 2, 'person': 1, 'motorcycle': 3, 'vehicle': 8}
+2: {'bus': 3, 'motorcycle': 7, 'person': 2, 'vehicle': 10}
+4: {'bus': 3, 'motorcycle': 7, 'person': 2, 'vehicle': 10}
+3: {'bus': 3, 'motorcycle': 7, 'person': 2, 'vehicle': 10}
+1: {'bus': 3, 'motorcycle': 7, 'person': 2, 'vehicle': 10}
+2: {'bus': 3, 'car': 3, 'motorcycle': 2, 'vehicle': 8}
+3: {'bus': 3, 'car': 3, 'motorcycle': 2, 'vehicle': 8}
+1: {'bus': 3, 'car': 3, 'motorcycle': 2, 'vehicle': 8}
+4: {'bus': 3, 'car': 3, 'motorcycle': 2, 'vehicle': 8}
+2: {'car': 5, 'bus': 2, 'vehicle': 7}
+3: {'car': 5, 'bus': 2, 'vehicle': 7}
+4: {'car': 5, 'bus': 2, 'vehicle': 7}
+1: {'car': 5, 'bus': 2, 'vehicle': 7}
+2: {'bus': 3, 'car': 7, 'motorcycle': 1, 'person': 1, 'vehicle': 11}
+3: {'bus': 3, 'car': 7, 'motorcycle': 1, 'person': 1, 'vehicle': 11}
+4: {'bus': 3, 'car': 7, 'motorcycle': 1, 'person': 1, 'vehicle': 11}
+1: {'bus': 3, 'car': 7, 'motorcycle': 1, 'person': 1, 'vehicle': 11}
+4: {'car': 5, 'bus': 1, 'motorcycle': 2, 'vehicle': 8}
+1: {'car': 5, 'bus': 1, 'motorcycle': 2, 'vehicle': 8}
+3: {'car': 5, 'bus': 1, 'motorcycle': 2, 'vehicle': 8}
+2: {'car': 5, 'bus': 1, 'motorcycle': 2, 'vehicle': 8}
