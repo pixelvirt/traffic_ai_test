@@ -157,4 +157,6 @@ try:
 finally:
     video_1.release()
     video_2.release()
+    video_3.release()
+    video_4.release()
     cv2.destroyAllWindows()

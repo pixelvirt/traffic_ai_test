@@ -4,25 +4,23 @@ import math
 import time
 from collections import Counter
 
-import schedule
-
 from ultralytics import YOLO
 
 from coco_names import coco_class_list, vehicle_class_list
 
 
-OUTPUT_FOLDER = 'output_2'
+OUTPUT_FOLDER = 'output2'
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
 
-model = YOLO("yolo_models/yolov8x.pt")
-time_interval = 1
+model = YOLO("yolo_models/yolov8l.pt")
+time_interval = 5
 
 
 def detect_class(img, video_name):
-    res =  cv2.cvtColor(cv2.equalizeHist(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)), cv2.COLOR_GRAY2BGR)
-    frame = model(res, conf=0.5)
+    # res =  cv2.cvtColor(cv2.equalizeHist(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)), cv2.COLOR_GRAY2BGR)
+    frame = model(img, conf=0.5)
     detected_classes = []
     for r in frame:
         boxes = r.boxes
@@ -68,8 +66,6 @@ def job():
 
         f.write(f"end-{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\n")
 
-
-schedule.every(time_interval).seconds.do(job)
-
 while True:
-    schedule.run_pending()
+    job()
+    time.sleep(time_interval)
