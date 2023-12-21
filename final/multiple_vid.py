@@ -47,9 +47,7 @@ if not video_4.isOpened():
 
 
 def detect_objects(image, video_name, frame_count):
-    # image =  cv2.cvtColor(cv2.equalizeHist(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)), cv2.COLOR_GRAY2BGR)
-
-    detections = YOLO_MODEL_LARGE(image, stream=True, conf=CONFIDENCE_THRESHOLD)
+    detections = YOLO_MODEL_LARGE(image, stream=True, conf=CONFIDENCE_THRESHOLD, classes=[2, 3, 5, 7])
     detected_classes = []
     for detection in detections:
         boxes = detection.boxes
