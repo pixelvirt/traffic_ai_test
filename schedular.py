@@ -15,12 +15,11 @@ if not os.path.exists(OUTPUT_FOLDER):
 
 
 model = YOLO("yolo_models/yolov8l.pt")
-time_interval = 5
+time_interval = 2
 
 
 def detect_class(img, video_name):
-    # res =  cv2.cvtColor(cv2.equalizeHist(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)), cv2.COLOR_GRAY2BGR)
-    frame = model(img, conf=0.5)
+    frame = model(img, conf=0.5, classes=[2, 3, 5, 7])
     detected_classes = []
     for r in frame:
         boxes = r.boxes
@@ -57,14 +56,10 @@ def job():
     img_4 = cv2.imread("output/camera-4.jpg")
 
     with open(f"data.txt", 'a') as f:
-        f.write(f"start-{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\n")
-
         detect_class(img_1, "camera-1")
         detect_class(img_2, "camera-2")
         detect_class(img_3, "camera-3")
         detect_class(img_4, "camera-4")
-
-        f.write(f"end-{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\n")
 
 while True:
     job()

@@ -5,10 +5,14 @@ import cv2
 from ultralytics import YOLO
 
 
-VIDEO_PATH_1 = "./videos/traffic_vid_1.mp4"
-VIDEO_PATH_2 = "./videos/traffic_vid_1.mp4"
-VIDEO_PATH_2 = "./videos/traffic_vid_1.mp4"
-VIDEO_PATH_4 = "./videos/traffic_vid_1.mp4"
+# vid_name = "traffic_vid_1.mp4"
+vid_name = "both_side.mp4"
+
+
+VIDEO_PATH_1 = f"./videos/{vid_name}"
+VIDEO_PATH_2 = f"./videos/{vid_name}"
+VIDEO_PATH_2 = f"./videos/{vid_name}"
+VIDEO_PATH_4 = f"./videos/{vid_name}"
 
 
 
@@ -50,7 +54,6 @@ try:
     fps = int(round(video_1.get(cv2.CAP_PROP_FPS)))
 
     while video_1.isOpened() and video_2.isOpened() and video_3.isOpened() and video_4.isOpened():
-        # read frame from webcam
         success_1, img_1 = video_1.read()
         success_2, img_2 = video_2.read()
         success_3, img_3 = video_3.read()
@@ -62,7 +65,6 @@ try:
 
 
         if frame_count % (CAPTURE_INTERVAL * fps) == 0:
-            current_time = time.strftime("%H%M%S", time.localtime())
             cv2.imwrite(f"{OUTPUT_FOLDER}/camera-1.jpg", img_1)
             cv2.imwrite(f"{OUTPUT_FOLDER}/camera-2.jpg", img_2)
             cv2.imwrite(f"{OUTPUT_FOLDER}/camera-3.jpg", img_3)
@@ -79,6 +81,8 @@ try:
         frame_2 = cv2.hconcat([img_3, img_4])
         frame = cv2.vconcat([frame_1, frame_2])
         cv2.imshow('frame', frame)
+
+        time.sleep(1/(fps*2))
 
 
         if cv2.waitKey(1) == ord('q'):

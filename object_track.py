@@ -23,7 +23,7 @@ video_path = "videos/both_side.mp4"
 video_path = "videos/traffic_vid_3.mp4"
 cap, frame_width, frame_height, fps = get_video_info(video_path)
 
-escape_frame, violation_frame = 2, 10
+escape_frame, violation_frame = 2, 5
 
 
 # Load model
@@ -130,14 +130,16 @@ try:
             print("Unable to read video frame.")
             exit()
 
+        frame_count += 1
+        if frame_count % 2 != 0:
+            continue
+
         result = model.predict(frame, stream=True, conf=0.4, classes=[2, 3, 5, 7])
         result = list(result)[0]
 
         xywhs = result.boxes.xywh
         confs = result.boxes.conf
         classes = result.boxes.cls
-
-        frame_count += 1
 
         if len(xywhs) == 0:
             continue
@@ -162,6 +164,8 @@ try:
                     side, distance = get_side_of_movement((x1, np.mean([y1, y2])))
                 elif direction == "B":
                     side, distance = get_side_of_movement((x2, np.mean([y1, y2])))
+                elif direction == "S":
+                    side, distance = get_side_of_movement((np.mean([x1, x2]), np.mean([y1, y2])))
 
                 if direction == "F" and side == "L":
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 1)
