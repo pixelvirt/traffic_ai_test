@@ -8,6 +8,7 @@ from coco_names import coco_class_list, vehicle_class_list
 
 
 model = YOLO("yolo_models/yolov8l.pt")
+show_frames = True
 
 
 # vid_name = "traffic_vid_1.mp4"
@@ -25,24 +26,6 @@ if not video_1.isOpened() or not video_2.isOpened() or not video_3.isOpened() or
     exit()
 
 
-def detect_class(img, video_name):
-    frame = model(img, conf=0.5, classes=[2, 3, 5, 7])
-    for r in frame:
-        cls = r.boxes.cls
-        object_classes = [coco_class_list[int(item)] for item in cls]
-
-        counter = dict(Counter(object_classes))
-        vehicle_count = 0
-        for key in counter:
-            if key in vehicle_class_list:
-                vehicle_count += counter[key]
-        
-        counter["vehicle"] = vehicle_count
-
-        with open(f"data.txt", 'a') as f:
-            f.write(f"{video_name}: {counter}\n")
-
-
 try:
     frame_count = 0
     fps = int(round(video_1.get(cv2.CAP_PROP_FPS)))
@@ -57,11 +40,31 @@ try:
         if not success_1 or not success_2 or not success_3 or not success_4:
             break
 
+        if show_frames:
+            frame_1 = cv2.hconcat([img_1, img_2])
+            frame_2 = cv2.hconcat([img_3, img_4])
+            frame = cv2.vconcat([frame_1, frame_2])
+            cv2.imshow("Frame", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
         if frame_count % (fps * time_interval) == 0:
-            detect_class(img_1, "camera-1")
-            detect_class(img_2, "camera-2")
-            detect_class(img_3, "camera-3")
-            detect_class(img_4, "camera-4") 
+            results = model([img_1, img_2, img_3, img_4], conf=0.5, classes=[2, 3, 5, 7])
+            for idx, r in enumerate(results):
+                cls = r.boxes.cls
+                object_classes = [coco_class_list[int(item)] for item in cls]
+
+                counter = dict(Counter(object_classes))
+                vehicle_count = 0
+                for key in counter:
+                    if key in vehicle_class_list:
+                        vehicle_count += counter[key]
+                
+                counter["vehicle"] = vehicle_count
+
+                with open(f"data.txt", 'a') as f:
+                    f.write(f"video-{idx}: {counter}\n")
 
         frame_count += 1
 

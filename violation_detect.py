@@ -1,5 +1,6 @@
 # pip install easydict
 
+import datetime
 import numpy as np
 import cv2
 import torch
@@ -33,7 +34,7 @@ def get_model(model_name):
     return model
 
 
-model_name = "yolo_models/yolov8n.pt"
+model_name = "yolo_models/yolov8s.pt"
 model = get_model(model_name)
 
 
@@ -198,6 +199,8 @@ try:
                     elif frames[-1] - frames[-2] > escape_frame:
                         deleteable_keys.append(object_id)
                     elif len(frames) >= violation_frame:
+                        with open("violation_data.txt", "a") as f:
+                            f.write(f"{object_id} {datetime.datetime.now().time()}\n")
                         deleteable_keys.append(object_id)
                         cv2.imwrite(f"output/violation-{frame_count}.jpg", frame)
                 

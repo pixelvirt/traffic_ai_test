@@ -1,0 +1,48 @@
+video-0: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-1: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-2: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-3: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-0: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-1: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-2: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-3: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-0: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-1: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-2: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-3: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-0: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-1: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-2: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-3: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-0: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-1: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-2: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-3: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-0: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-1: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-2: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-3: {'truck': 3, 'car': 13, 'bus': 1, 'vehicle': 17}
+video-0: {'bus': 3, 'car': 9, 'truck': 1, 'vehicle': 13}
+video-1: {'bus': 3, 'car': 9, 'truck': 1, 'vehicle': 13}
+video-2: {'bus': 3, 'car': 9, 'truck': 1, 'vehicle': 13}
+video-3: {'bus': 3, 'car': 9, 'truck': 1, 'vehicle': 13}
+video-0: {'truck': 2, 'car': 14, 'vehicle': 16}
+video-1: {'truck': 2, 'car': 14, 'vehicle': 16}
+video-2: {'truck': 2, 'car': 14, 'vehicle': 16}
+video-3: {'truck': 2, 'car': 14, 'vehicle': 16}
+video-0: {'truck': 2, 'car': 15, 'bus': 1, 'vehicle': 18}
+video-1: {'truck': 2, 'car': 15, 'bus': 1, 'vehicle': 18}
+video-2: {'truck': 2, 'car': 15, 'bus': 1, 'vehicle': 18}
+video-3: {'truck': 2, 'car': 15, 'bus': 1, 'vehicle': 18}
+video-0: {'car': 13, 'bus': 1, 'vehicle': 14}
+video-1: {'car': 13, 'bus': 1, 'vehicle': 14}
+video-2: {'car': 13, 'bus': 1, 'vehicle': 14}
+video-3: {'car': 13, 'bus': 1, 'vehicle': 14}
+video-0: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-1: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-2: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-3: {'truck': 4, 'car': 15, 'vehicle': 19}
+video-0: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-1: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-2: {'truck': 4, 'car': 10, 'vehicle': 14}
+video-3: {'truck': 4, 'car': 10, 'vehicle': 14}
