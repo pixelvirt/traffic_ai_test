@@ -8,8 +8,8 @@ from ultralytics import YOLO
 from coco_names import coco_class_list, vehicle_class_list
 
 
-VIDEO_PATH = "./videos/traffic_1.mp4"
-# VIDEO_PATH = "./videos/traffic_vid_1.mp4"
+# VIDEO_PATH = "./videos/traffic_1.mp4"
+VIDEO_PATH = "./videos/traffic_vid_2.mp4"
 YOLO_MODEL_NANO = YOLO("yolo_models/yolov8n.pt")
 YOLO_MODEL_SMALL = YOLO("yolo_models/yolov8s.pt")
 YOLO_MODEL_LARGE = YOLO("yolo_models/yolov8l.pt")
@@ -58,28 +58,28 @@ try:
                 detected_classes.append(cls)
                 cv2.putText(img, f"{conf} {coco_class_list[cls]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-            # save frame to output folder
-            if frame_count % (CAPTURE_INTERVAL * fps) == 0:
-                detected_classes_names = [coco_class_list[item] for item in detected_classes]
-                counter = Counter(detected_classes_names)
-                # print(counter)
+            # # save frame to output folder
+            # if frame_count % (CAPTURE_INTERVAL * fps) == 0:
+            #     detected_classes_names = [coco_class_list[item] for item in detected_classes]
+            #     counter = Counter(detected_classes_names)
+            #     # print(counter)
 
-                detected_vehicles = ["vehicle" if item in vehicle_class_list else item for item in detected_classes_names]
-                vehicle_counter = Counter(detected_vehicles)
-                vehicle_count = vehicle_counter["vehicle"]
+            #     detected_vehicles = ["vehicle" if item in vehicle_class_list else item for item in detected_classes_names]
+            #     vehicle_counter = Counter(detected_vehicles)
+            #     vehicle_count = vehicle_counter["vehicle"]
 
-                counter["vehicle"] = vehicle_count
+            #     counter["vehicle"] = vehicle_count
 
-                with open(f"data.txt", 'a') as f:
-                    f.write(f"{dict(counter)}\n")
+            #     with open(f"data.txt", 'a') as f:
+            #         f.write(f"{dict(counter)}\n")
 
-                text_x, text_y = 25, 25
-                for class_name, count in counter.items():
-                    cv2.putText(img, f"{class_name}: {count}", (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-                    text_y += 25
+            #     text_x, text_y = 25, 25
+            #     for class_name, count in counter.items():
+            #         cv2.putText(img, f"{class_name}: {count}", (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            #         text_y += 25
 
-                cv2.imwrite(f"{OUTPUT_FOLDER}/{frame_count}.jpg", img)
-                # print(f"Captured {frame_count}.jpg")
+            #     cv2.imwrite(f"{OUTPUT_FOLDER}/{frame_count}.jpg", img)
+            #     # print(f"Captured {frame_count}.jpg")
                 
             detected_classes = []
 

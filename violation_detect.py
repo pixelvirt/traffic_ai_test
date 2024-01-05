@@ -20,7 +20,6 @@ def get_video_info(video_path):
     return cap, frame_width, frame_height, fps
 
 
-video_path = "videos/both_side.mp4"
 video_path = "videos/traffic_vid_3.mp4"
 cap, frame_width, frame_height, fps = get_video_info(video_path)
 
@@ -34,7 +33,7 @@ def get_model(model_name):
     return model
 
 
-model_name = "yolo_models/yolov8s.pt"
+model_name = "yolo_models/yolov8n.pt"
 model = get_model(model_name)
 
 
