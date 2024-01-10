@@ -1,48 +1,23 @@
-# pip install easydict
-
 import datetime
+import os
+
 import numpy as np
 import cv2
 import torch
 from ultralytics import YOLO
 
+from deep_sort_pytorch.utils.parser import get_config
+from deep_sort_pytorch.deep_sort import DeepSort
 
-# Load video and video_info
-def get_video_info(video_path):
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        raise ValueError("Error: Unable to open video.")
-    
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(round(cap.get(cv2.CAP_PROP_FPS)))
-
-    return cap, frame_width, frame_height, fps
-
-
-video_path = "videos/traffic_vid_3.mp4"
-cap, frame_width, frame_height, fps = get_video_info(video_path)
-
-escape_frame, violation_frame = 2, 5
-
-
-# Load model
-def get_model(model_name):
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model = YOLO(model_name).to(device)
-    return model
-
-
-model_name = "yolo_models/yolov8n.pt"
-model = get_model(model_name)
-
+from numba import jit
 
 # Load coco labels
 from coco_names import coco_class_list
 
 
-from deep_sort_pytorch.utils.parser import get_config
-from deep_sort_pytorch.deep_sort import DeepSort
+# Cuda availability
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+is_cuda_available = True if device == torch.device("cuda") else False
 
 
 # Initialize deep sort
@@ -58,20 +33,34 @@ def initialize_deepsort():
         max_iou_distance=cfg_deep.DEEPSORT.MAX_IOU_DISTANCE,
         max_age=cfg_deep.DEEPSORT.MAX_AGE,
         nn_budget=cfg_deep.DEEPSORT.NN_BUDGET,
-        use_cuda=False,
+        use_cuda=is_cuda_available,
     )
 
     return deepsort
 
 
-deepsort = initialize_deepsort()
+# Load model
+def get_model(model_name):
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    model = YOLO(model_name).to(device)
+    return model
 
 
-# Line coordinates
-line_coordinates = ((200, 0), (65, 845))
+# Load video and video_info
+def get_video_info(video_path):
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise ValueError("Error: Unable to open video.")
+    
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(round(cap.get(cv2.CAP_PROP_FPS)))
+
+    return cap, frame_width, frame_height, fps
 
 
 # Distance from line
+@jit(target_backend="cuda")
 def distance_from_line(x, y):
     (x1, y1), (x2, y2) = line_coordinates
     numerator = ((x2 - x1) * (y1 - y)) - ((x1 - x) * (y2 - y1))
@@ -84,6 +73,7 @@ def distance_from_line(x, y):
 
 
 # Get direction of movement
+@jit(target_backend="cuda")
 def get_direction_of_movement(prev_detections, box, object_id):
     direction = ""
 
@@ -101,6 +91,7 @@ def get_direction_of_movement(prev_detections, box, object_id):
 
 
 # Get side of movement
+@jit(target_backend="cuda")
 def get_side_of_movement(point):
     x, y = point
 
@@ -118,7 +109,28 @@ def get_side_of_movement(point):
     return side, distance
 
 
+# Create output folders
+def create_output_folders():
+    if not os.path.exists("output"):
+        os.mkdir("output")
+    if not os.path.exists("data"):
+        os.mkdir("data")
+
+
 # Main code
+video_path = "videos/traffic_vid_3.mp4"
+cap, frame_width, frame_height, fps = get_video_info(video_path)
+
+line_coordinates = ((200, 0), (65, 845))
+escape_frame, violation_frame = 2, 5
+
+model_name = "yolo_models/yolov8n.pt"
+model = get_model(model_name)
+
+deepsort = initialize_deepsort()
+
+create_output_folders()
+
 try:
     frame_count = 0
     prev_detections = []
@@ -198,7 +210,7 @@ try:
                     elif frames[-1] - frames[-2] > escape_frame:
                         deleteable_keys.append(object_id)
                     elif len(frames) >= violation_frame:
-                        with open("violation_data.txt", "a") as f:
+                        with open("data/violation_data.txt", "a") as f:
                             f.write(f"{object_id} {datetime.datetime.now().time()}\n")
                         deleteable_keys.append(object_id)
                         cv2.imwrite(f"output/violation-{frame_count}.jpg", frame)

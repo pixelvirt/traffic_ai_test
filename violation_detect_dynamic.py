@@ -1,6 +1,5 @@
 import os
 import datetime
-
 import numpy as np
 import cv2
 import torch
@@ -59,7 +58,7 @@ def get_video_info(video_path):
 
 
 # Distance from line
-@jit(target_backend="cuda" if is_cuda_available else "cpu")
+@jit(target_backend="cuda")
 def distance_from_line(x, y, line_coordinate):
     (x1, y1), (x2, y2) = line_coordinate
     numerator = ((x2 - x1) * (y1 - y)) - ((x1 - x) * (y2 - y1))
@@ -107,6 +106,18 @@ def get_side_of_movement(point, line_coordinate):
 
     return side, distance
 
+# Red light violation
+def red_light_violation(idx, x1, y1, x2, y2, object_id, class_name, direction):
+    if direction == "F" and x2 >= red_line_coordinates[idx][0] and y2 >= red_line_coordinates[idx][1]:
+        cv2.rectangle(frames_list[idx], (x1, y1), (x2, y2), (0, 0, 255), 1)
+        cv2.putText(frames_list[idx], f"{object_id} {direction} {coco_class_list[class_name]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+        if object_id not in red_light_violation_ids:
+            red_light_violation_ids.append(object_id)
+            with open("data/red_light_data.txt", "a") as f:
+                f.write(f"camera-{idx} {object_id} {datetime.datetime.now().time()}\n")
+            cv2.imwrite(f"output/{idx}/red_light_violation-{frame_count}.jpg", frames_list[idx])
+
 
 # Create output folders
 def create_output_folders():
@@ -116,26 +127,27 @@ def create_output_folders():
         os.mkdir("data")
 
 
-# Main code
-video_path_1 = "videos/traffic_vid_3.mp4"
-video_path_2 = "videos/traffic_vid_2.mp4"
-cap_1, frame_width_1, frame_height_1, fps_1 = get_video_info(video_path_1)
-cap_2, frame_width_2, frame_height_2, fps_2 = get_video_info(video_path_2)
-cap_3, frame_width_3, frame_height_3, fps_3 = get_video_info(video_path_1)
-cap_4, frame_width_4, frame_height_4, fps_4 = get_video_info(video_path_2)
+# Main Logic
+model_name = "yolo_models/yolov8n.pt"
+model = get_model(model_name, device)
 
-line_coordinates = [((200, 1), (65, 845)), ((260,1), (1,625)), ((200, 1), (65, 845)), ((260,1), (1,625))]
+video_paths = ["videos/traffic_vid_3.mp4", "videos/traffic_vid_2.mp4", "videos/traffic_vid_3.mp4"]
+deepsort = [initialize_deepsort() for _ in range(len(video_paths))]
+cap_list = [get_video_info(video_path) for video_path in video_paths]
+
+for idx, cap in enumerate(cap_list):
+    if not cap[0].isOpened():
+        raise ValueError(f"Error: Unable to open video {idx}.")
+
+mid_line_coordinates = [((200, 1), (65, 845)), ((260,1), (1,625)), ((200, 1), (65, 845))]
+red_line_coordinates = [(80,790), (1, 650), (80,790)]
+red_light = False
 escape_frame, violation_frame = 2, 5
 violation_allowed_limit = 10
 
-model_name = "yolo_models/yolov8l.pt"
-model = get_model(model_name, device)
 
-deepsort_1 = initialize_deepsort()
-deepsort_2 = initialize_deepsort()
-deepsort_3 = initialize_deepsort()
-deepsort_4 = initialize_deepsort()
-deepsort = [deepsort_1, deepsort_2, deepsort_3, deepsort_4]
+if not len(mid_line_coordinates) == len(cap_list) or not len(red_line_coordinates) == len(cap_list):
+    raise ValueError("Error: Line coordinates and video count must be equal.")
 
 create_output_folders()
 
@@ -145,22 +157,25 @@ try:
     temp_prev_detections = []
     violated_object_ids = []
     violation_info = {}
+    red_light_violation_ids = []
 
     while True:
-        success_1, frame_1 = cap_1.read()
-        success_2, frame_2 = cap_2.read()
-        success_3, frame_3 = cap_3.read()
-        success_4, frame_4 = cap_4.read()
+        frames_list = []
+        for cap, frame_width, frame_height, fps in cap_list:
+            success, frame = cap.read()
+            frames_list.append(frame)
 
-        if not success_1 or not success_2 or not success_3 or not success_4:
-            raise ValueError("Error: Unable to read video frame.")
-        
         frame_count += 1
         if frame_count % escape_frame != 0:
             continue
 
+        # change this code to change the red light logic
+        if 200 < frame_count < 400:
+            red_light = True
+        else:
+            red_light = False
+
         # Get detections
-        frames_list = [frame_1, frame_2, frame_3, frame_4]
         for idx, frame in enumerate(frames_list):
             if not os.path.exists(f"output/{idx}"):
                 os.mkdir(f"output/{idx}")
@@ -173,7 +188,9 @@ try:
             confs = detection.boxes.conf.cpu().numpy()
             classes = detection.boxes.cls.cpu().numpy()
 
-            cv2.line(frames_list[idx], line_coordinates[idx][0], line_coordinates[idx][1], (0, 255, 0), 2)
+            cv2.line(frames_list[idx], mid_line_coordinates[idx][0], mid_line_coordinates[idx][1], (0, 255, 0), 2)
+            if red_light:
+                cv2.line(frames_list[idx], red_line_coordinates[idx], (frame_width, red_line_coordinates[idx][1]), (0, 0, 255), 2)
 
             if len(xywhs) == 0:
                 continue
@@ -197,11 +214,11 @@ try:
                     x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
                     if direction == "F":
-                        side, distance = get_side_of_movement((x1, np.mean([y1, y2])), line_coordinates[idx])
+                        side, distance = get_side_of_movement((x1, np.mean([y1, y2])), mid_line_coordinates[idx])
                     elif direction == "B":
-                        side, distance = get_side_of_movement((x2, np.mean([y1, y2])), line_coordinates[idx])
+                        side, distance = get_side_of_movement((x2, np.mean([y1, y2])), mid_line_coordinates[idx])
                     elif direction == "S":
-                        side, distance = get_side_of_movement((np.mean([x1, x2]), np.mean([y1, y2])), line_coordinates[idx])
+                        side, distance = get_side_of_movement((np.mean([x1, x2]), np.mean([y1, y2])), mid_line_coordinates[idx])
 
                     if direction == "F" and side == "L" and (distance > violation_allowed_limit):
                         cv2.rectangle(frames_list[idx], (x1, y1), (x2, y2), (0, 0, 255), 1)
@@ -227,6 +244,9 @@ try:
                         cv2.rectangle(frames_list[idx], (x1, y1), (x2, y2), (255, 0, 0), 1)
                         cv2.putText(frames_list[idx], f"{object_id} {direction} {side} {coco_class_list[class_name]}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
+                    if red_light:
+                        red_light_violation(idx, x1, y1, x2, y2, object_id, class_name, direction)
+
                     deleteable_keys = []
                     for object_id, frames in violation_info.items():
                         if len(frames) < 2:
@@ -250,11 +270,12 @@ try:
         temp_prev_detections = []
 
         
-        if frame_width_1 != frame_width_2 or frame_height_1 != frame_height_2:
-            frame_2 = cv2.resize(frame_2, (frame_width_1, frame_height_1))
-
-        if frame_width_1 != frame_width_4 or frame_height_1 != frame_height_4:
-            frame_2 = cv2.resize(frame_4, (frame_width_1, frame_height_1))
+        # Display output
+        for idx, frame in enumerate(frames_list):
+            if idx == 0:
+                continue
+            elif cap_list[idx][1] != cap_list[0][1] or cap_list[idx][2] != cap_list[0][2]:
+                cv2.resize(frame, (cap_list[0][1], cap_list[0][2]))
 
         display_frames = cv2.hconcat([item for item in frames_list])
         cv2.imshow("Output", display_frames)
@@ -263,8 +284,6 @@ try:
             break    
 
 finally:
-    cap_1.release()
-    cap_2.release()
-    cap_3.release()
-    cap_4.release()
+    for cap in cap_list:
+        cap[0].release()
     cv2.destroyAllWindows()

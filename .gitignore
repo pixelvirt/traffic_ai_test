@@ -4,7 +4,7 @@ videos
 images
 output
 output2
-data.txt
+/data
 
 # /deep_sort_pytorch
 # Byte-compiled / optimized / DLL files
