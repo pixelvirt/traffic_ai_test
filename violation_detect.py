@@ -153,6 +153,13 @@ try:
         confs = result.boxes.conf
         classes = result.boxes.cls
 
+        for box, class_name, conf in zip(xywhs, classes, confs):
+            x, y, w, h = box
+            x, y, w, h = int(x), int(y), int(w/2), int(h/2)
+            cv2.rectangle(frame, (x-w, y-h), (x + w, y + h), (0, 255, 0), 1)
+            cv2.circle(frame, (x - w, y - h), 3, (0, 0, 255), -1)
+            cv2.circle(frame, (x + w, y + h), 3, (0, 0, 255), -1)
+
         if len(xywhs) == 0:
             continue
 
