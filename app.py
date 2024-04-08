@@ -307,7 +307,7 @@ class TrafficViolationDetection:
             '-vcodec', 'rawvideo',
             '-s', f'{self.video_info[camera_id][2]}x{self.video_info[camera_id][3]}',
             '-pix_fmt', 'bgr24',
-            '-r', str(self.video_info[camera_id][1]),
+            '-r', str(int(self.video_info[camera_id][1]) / self.escape_frame),
             '-i', '-',
             '-c:v', 'libx264',
             '-preset', 'ultrafast',
@@ -393,7 +393,7 @@ class TrafficViolationDetection:
 
                             # Track objects using deep sort
                             trackings = self.deepsorts[camera_id].update(xywhs, confs, classes, frames_dict[camera_id])
-
+                            
                             # If objects are tracked then perform further operations
                             if len(trackings) > 0:
                                 bboxes_xyxy = trackings[:, :4]
@@ -459,13 +459,16 @@ class TrafficViolationDetection:
                     if cv2.waitKey(1) & 0xFF == ord("q"):
                         break
 
-                except Exception as e:
-                    print(e)
-                    for cap, _, _, _ in self.video_info.values():
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                # except Exception as e:
+                #     print(e)
+                #     for cap, _, _, _ in self.video_info.values():
+                #         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    
+                finally:
+                    pass
 
-        except Exception as e:
-            print(e)
+        # except Exception as e:
+        #     print(e)
             
         finally:
             print(self.frame_count)
@@ -479,17 +482,21 @@ class TrafficViolationDetection:
 
 
 def start_violation_detection():
-    cameras = [{"id": 1, "source": "videos/traffic_vid_3.mp4"}, {"id": 2, "source": "videos/traffic_vid_3.mp4"}]
-    coordinates = [
-        {"id": 1, "lane_violation": ((200, 1), (65, 845)), "red_light_violation": ((80, 790), (470, 790))}, 
-        {"id": 2, "lane_violation": ((200, 1), (65, 845)), "red_light_violation": ((80, 790), (470, 790))}
-    ]
+    cameras = [{"id": 1, "source": "videos/M6 Motorway Traffic.mp4"}, {"id": 2, "source": "videos/Relaxing highway traffic.mp4"}]
+    # coordinates = [
+    #     {"id": 1, "lane_violation": ((200, 1), (65, 845)), "red_light_violation": ((80, 790), (470, 790))}, 
+    #     {"id": 2, "lane_violation": ((200, 1), (65, 845)), "red_light_violation": ((80, 790), (470, 790))}
+    # ]
 
     if cameras:
         camera_ids = [ camera["id"] for camera in cameras ]
         video_paths = { camera["id"]: camera["source"] for camera in cameras  }
-        lane_violation_line_coordinates = { camera["id"]: coordinate.get("lane_violation", None) for camera, coordinate in zip(cameras, coordinates)}
-        red_light_violation_line_coordinates = { camera["id"]: coordinate.get("red_light_violation", None) for camera, coordinate in zip(cameras, coordinates)}
+
+        # lane_violation_line_coordinates = { camera["id"]: coordinate.get("lane_violation", None) for camera, coordinate in zip(cameras, coordinates)}
+        # red_light_violation_line_coordinates = { camera["id"]: coordinate.get("red_light_violation", None) for camera, coordinate in zip(cameras, coordinates)}
+        lane_violation_line_coordinates = { camera["id"]: None for camera in cameras }
+        red_light_violation_line_coordinates = { camera["id"]: None for camera in cameras }
+
         output_dir = "output"
         model_name = f"yolo_models/yolov8n.pt"
 
